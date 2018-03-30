@@ -26,7 +26,20 @@ app = Flask(__name__)
 @app.route('/restaurants', methods=['GET', 'POST'])
 def all_restaurants_handler():
     if request.method == 'POST':
-        return "add searched restaurant"
+        # get location and meal type from query
+        location = request.args.get('location')
+        mealType = request.args.get('mealType')
+        # find restaurant based on location and meal Type
+        restaurantInfo = findARestaurant(mealType, location)
+        # add this new restaurant in database
+        restaurant = Restaurant(restaurant_name=restaurantInfo['name'],
+                                restaurant_address=restaurantInfo['address'],
+                                restaurant_image=restaurantInfo['image'])
+        session.add(restaurant)
+        session.commit()
+        # return json object
+        return jsonify(Restaurant=[restaurant.serialize])
+
     # return "show all restaurants"
     else:
         restaurants = session.query(Restaurant).all()
