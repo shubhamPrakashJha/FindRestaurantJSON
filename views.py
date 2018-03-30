@@ -25,25 +25,29 @@ app = Flask(__name__)
 
 @app.route('/restaurants', methods=['GET', 'POST'])
 def all_restaurants_handler():
-    if request.method == 'POST':
+    if request.method == 'GET':
+        restaurants = session.query(Restaurant).all()
+        return jsonify(
+            restaurants=[restaurant.serialize for restaurant in restaurants])
+    elif request.method == 'POST':
         # get location and meal type from query
         location = request.args.get('location')
         mealType = request.args.get('mealType')
         # find restaurant based on location and meal Type
         restaurantInfo = findARestaurant(mealType, location)
-        # add this new restaurant in database
-        restaurant = Restaurant(restaurant_name=restaurantInfo['name'],
-                                restaurant_address=restaurantInfo['address'],
-                                restaurant_image=restaurantInfo['image'])
-        session.add(restaurant)
-        session.commit()
-        # return json object
-        return jsonify(Restaurant=[restaurant.serialize])
+        if restaurantInfo != "No Restaurants Found":
+            # add this new restaurant in database
+            restaurant = Restaurant(restaurant_name=unicode(restaurantInfo['name']),
+                                    restaurant_address=unicode(restaurantInfo['address']),
+                                    restaurant_image=restaurantInfo['image'])
+            session.add(restaurant)
+            session.commit()
+            # return json object
+            return jsonify(restaurant = restaurant.serialize)
 
     # return "show all restaurants"
     else:
-        restaurants = session.query(Restaurant).all()
-        return jsonify(Restaurant=[restaurant.serialize for restaurant in restaurants])
+        return jsonify({"error": "No restaurant found"})
 
 
 # YOUR CODE HERE
